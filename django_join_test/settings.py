@@ -139,3 +139,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # API key to run the Google Maps.
 GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY")
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
