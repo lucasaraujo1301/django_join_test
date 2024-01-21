@@ -23,6 +23,18 @@ def custom_today():
     return datetime.date.today() + datetime.timedelta(days=5)
 
 
+def detail_url(target_id):
+    """
+    The detail_url function is a helper function that returns the URL for an individual target.
+    It takes in one argument, which is the ID of the target to be displayed.
+
+    :param target_id: Get the target from the database
+    :return: The url for the target detail page
+    :doc-author: Trelent
+    """
+    return reverse("target:target-detail", args=[target_id])
+
+
 def create_target(**params):
     """
     The create_target function creates a target object with the given parameters.
@@ -129,3 +141,13 @@ class TestTargetsApi(TestCase):
 
             self.assertEqual(res.status_code, status.HTTP_200_OK)
             self.assertEqual(res.data, target_serializer.data)
+
+    def test_retrieve_one_target(self):
+        target = create_target()
+
+        res = self.client.get(detail_url(target.id))
+
+        target_serializer = serializers.TargetSerializer(target)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data, target_serializer.data)
