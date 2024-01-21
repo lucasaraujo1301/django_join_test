@@ -1,4 +1,3 @@
-import datetime
 import uuid
 
 from django.db import models
@@ -53,15 +52,3 @@ class Target(CustomBaseModel):
     expiration_date = models.DateField(default=get_expiration_date_default())
 
     objects = CustomTargetManager()
-
-    def is_expired(self):
-        """
-        The is_expired function checks to see if the expiration date of a given
-            instance of the class is less than today's date. If it is, then it returns
-            True, otherwise False.
-
-        :param self: Refer to the current instance of a class
-        :return: A boolean value
-        :doc-author: Trelent
-        """
-        return self.expiration_date < datetime.datetime.now().date()

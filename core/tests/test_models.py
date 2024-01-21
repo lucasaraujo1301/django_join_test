@@ -32,7 +32,6 @@ class TestModels(TestCase):
         self.assertEqual(latitude, target.latitude)
         self.assertEqual(longitude, target.longitude)
         self.assertEqual(default_expiration_date, target.expiration_date)
-        self.assertEqual(target.is_expired(), False)
 
     def test_create_target_with_invalid_expiration_date(self):
         """
