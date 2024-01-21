@@ -151,3 +151,23 @@ class TestTargetsApi(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, target_serializer.data)
+
+    def test_delete_target(self):
+        """
+        The test_delete_target function tests the DELETE method on a target.
+        It creates a new target, then uses the client to send a DELETE request to /api/targets/{id}/.
+        The test checks that the response has status code 204 NO CONTENT and that there are no targets with this id in
+         the database.
+
+        :param self: Represent the instance of the class
+        :return: A status code of 204, which means that the request was successful and there is no content to return
+        :doc-author: Trelent
+        """
+        target = create_target()
+
+        res = self.client.delete(detail_url(target.id))
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+
+        target = Target.objects.filter(pk=target.id).exists()
+        self.assertFalse(target)
