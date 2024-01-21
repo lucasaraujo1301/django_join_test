@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from core.models import Target
+from core.utils import get_expiration_date_default
 
 
 class TargetSerializer(serializers.ModelSerializer):
@@ -8,6 +9,23 @@ class TargetSerializer(serializers.ModelSerializer):
         model = Target
         fields = ["id", "name", "latitude", "longitude", "expiration_date"]
         read_only_fields = ["id"]
+
+    def validate_expiration_date(self, value):
+        """
+        The validate_expiration_date function is a custom validation function that checks if the expiration date
+            of an item is at least one day ahead. If it isn't, then the serializer will raise a ValidationError.
+
+        :param self: Access the object that is being validated
+        :param value: Pass the value of the field to be validated
+        :return: The value if it is not none and the value is greater than one day ahead
+        :doc-author: Trelent
+        """
+        if value is not None:
+            if value < get_expiration_date_default():
+                raise serializers.ValidationError(
+                    "Expiration Date must be at least one day ahead."
+                )
+        return value
 
     def create(self, validated_data):
         """

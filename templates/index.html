@@ -1,10 +1,239 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% load static %}
 
-</body>
-</html>
+{% block content %}
+
+    <div id="map" style="height: 800px"></div>
+
+    <!-- Button trigger modal -->
+    <button type="button" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#exampleModal">
+        Create Target
+    </button>
+
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Create Target</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="target_form" action="api/target/" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="name" name="name"
+                                   placeholder="name">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="latitude" class="form-label">Latitude</label>
+                            <input type="text" class="form-control" id="latitude" name="latitude"
+                                   placeholder="-23.5489">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="longitude" class="form-label">Longitude</label>
+                            <input type="text" class="form-control" id="longitude" name="longitude"
+                                   placeholder="-46.6388">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="expiration_date" class="form-label">Expiration Date</label>
+                            <input type="text" class="form-control" id="expiration_date" name="expiration_date"
+                                   placeholder="MM-DD-YYYY">
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button id="save_target_form" type="submit" class="btn btn-primary">Save changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&callback=initMap">
+    </script>
+    <script>
+        var map;
+        var targets;
+        var marker;
+
+        const form = $("#target_form");
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: -23.5489, lng: -46.6388 },
+                zoom: 8
+            });
+
+            get_markers();
+        }
+
+        function get_markers() {
+            $.ajax({
+                url: "api/target/",
+                method: "GET",
+                dataType: "json",
+                success: function (response) {
+                    targets = response;
+                    for (let target of targets) {
+                        add_marker(target.name, parseFloat(target.latitude), parseFloat(target.longitude));
+                        marker.addListener('click', function() {
+                            fill_form_to_update(target);
+                            $('#exampleModal').modal("show");
+                        })
+                    }
+                    focusOnMarker();
+                },
+                error: function (error) {
+                    console.error(error);
+                }
+            });
+        }
+        function add_marker(name, latitude, longitude) {
+            marker = new google.maps.Marker({
+                position: {
+                    lat: latitude,
+                     lng: longitude
+                 },
+                map: map,
+                title: name
+            });
+        }
+        function focusOnMarker() {
+            if (marker) {
+                map.setCenter(marker.getPosition());
+            }
+        }
+
+        $("#expiration_date").inputmask("99-99-9999", {
+            showMaskOnHover: false,
+        });
+
+        form.submit(function (event) {
+            event.preventDefault();
+
+            remove_previous_errors();
+
+            let formData = {};
+            $.each($(this).serializeArray(), function (_, field) {
+                if (field.value !== "") {
+                    if (field.name === "expiration_date") {
+                        let splited_date = field.value.split('-');
+                        formData[field.name] = `${splited_date[2]}-${splited_date[0]}-${splited_date[1]}`;
+                    }else {
+                        formData[field.name] = field.value;
+                    }
+                }
+            });
+
+            $.ajax({
+                url: $(this).attr("action"),
+                method: $(this).attr('method'),
+                data: JSON.stringify(formData), // Convert form data to JSON
+                contentType: "application/json", // Set content type to JSON
+                dataType: "json",
+                success: function (response) {
+                    const marker = new google.maps.Marker({
+                        position: {
+                            lat: parseFloat(response.latitude),
+                            lng: parseFloat(response.longitude)
+                        },
+                        map: map,
+                        title: response.name
+                    });
+
+                    if (this.method === "PATCH") {
+                        window.location.reload();
+                    }
+                    clear_form();
+                },
+                error: function (response) {
+                    const errors = response.responseJSON;
+
+                    if (errors.name) {
+                        add_message_error_to_input(errors.name, 'name');
+                    }
+                    if (errors.latitude) {
+                        add_message_error_to_input(errors.latitude, 'latitude');
+                    }
+                    if (errors.longitude) {
+                        add_message_error_to_input(errors.longitude, 'longitude');
+                    }
+                    if (errors.expiration_date) {
+                        add_message_error_to_input(errors.expiration_date, 'expiration_date');
+                    }
+                },
+            });
+        });
+
+        function add_message_error_to_input(errors, input_name) {
+            const input = $(`input#${input_name}`);
+            const error_div = $('<div class="invalid-feedback"></div');
+            let error_msg = "";
+            for (let error of errors) {
+                error_msg += `${error} \n`;
+            }
+            error_div.append(error_msg);
+            input.after(error_div);
+            input.addClass("is-invalid");
+        }
+
+        function remove_previous_errors() {
+            $("div.invalid-feedback").remove();
+        }
+
+        function fill_form_to_update(target) {
+            form.attr("method", "PATCH");
+            form.attr("action", `api/target/${target.id}/`);
+
+            $(".modal-title").text("Update Target");
+
+            $("#name").val(target.name);
+            $("#latitude").val(target.latitude);
+            $("#longitude").val(target.longitude);
+            const expiration_date = target.expiration_date.split('-')
+
+            $("#expiration_date").val(`${expiration_date[1]}-${expiration_date[2]}-${expiration_date[0]}`);
+
+            const save_button = $('#save_target_form');
+            const delete_target_button = $(
+                `<button id="${target.id}" type="button" class="delete-target btn btn-danger">Delete Target</button>`
+            );
+            delete_target_button.click(function(event) {
+                event.preventDefault();
+                delete_target($(this).attr("id"));
+            });
+            save_button.before(delete_target_button);
+        }
+
+        function clear_form() {
+            $("#name").val(undefined);
+            $("#latitude").val(undefined);
+            $("#longitude").val(undefined);
+
+            $("#expiration_date").val(undefined);
+
+            $("#exampleModal").modal("hide");
+        }
+
+        function delete_target(target_id) {
+            const url = `api/target/${target_id}/`
+
+            $.ajax({
+                url: url,
+                method: "DELETE",
+                success: function (response) {
+                    window.location.reload();
+                },
+                error: function(response) {
+                    console.error(response);
+                }
+            })
+        }
+    </script>
+{% endblock %}
