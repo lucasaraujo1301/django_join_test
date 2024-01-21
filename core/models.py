@@ -38,16 +38,12 @@ class CustomTargetManager(models.Manager):
         expiration_date = extra_fields.get("expiration_date", None)
 
         if expiration_date is not None:
-            print(expiration_date, get_expiration_date_default())
             if expiration_date < get_expiration_date_default():
                 raise ValueError("Expiration Date must be at least one day ahead.")
 
-        target = self.model(
+        return self.create(
             name=name, latitude=latitude, longitude=longitude, **extra_fields
         )
-        target.save()
-
-        return target
 
 
 class Target(CustomBaseModel):

@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     # Apps created for this project
     "core",
+    "targets",
 ]
 
 MIDDLEWARE = [
