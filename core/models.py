@@ -16,20 +16,25 @@ class CustomBaseModel(models.Model):
 class CustomTargetManager(models.Manager):
     def create_target(self, name: str, latitude: str, longitude: str, **extra_fields):
         """
-        The create_target function creates a new target with the given name, latitude and longitude.
-            Args:
-                name (str): The name of the target to be created.
-                latitude (str): The latitude of the target to be created.
-                longitude (str): The longitude of the target to be created.
+        The create_target function creates a new target with the given name, latitude, and longitude.
+            The function also accepts an expiration_date argument which is optional. If no expiration date is provided,
+            then the default value of one day from now will be used.
 
-        :param self: Refer to the object itself, and is used in classes
-        :param name: str: Specify the name of the target
-        :param latitude: str: Set the latitude of the target
-        :param longitude: str: Define the longitude of the target
-        :param **extra_fields: Pass in any additional fields that are not explicitly defined
-        :return: The target object
+        :param self: Refer to the object itself
+        :param name: str: Ensure that the name of the target is provided
+        :param latitude: str: Ensure that the latitude is a string
+        :param longitude: str: Specify the longitude of a target
+        :param **extra_fields: Pass in the expiration_date field
+        :return: A target object
         :doc-author: Trelent
         """
+        if not name:
+            raise ValueError("Name must be provided.")
+        if not latitude:
+            raise ValueError("Latitude must be provided.")
+        if not longitude:
+            raise ValueError("Longitude must be provided.")
+
         expiration_date = extra_fields.get("expiration_date", None)
 
         if expiration_date is not None:
