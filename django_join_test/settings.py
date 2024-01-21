@@ -36,12 +36,17 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    # Apps from the Django itself
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Apps coming from pip
+    "rest_framework",
+    "drf_spectacular",
+    # Apps created for this project
     "core",
 ]
 
