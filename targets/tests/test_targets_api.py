@@ -1,4 +1,5 @@
 import datetime
+from uuid import UUID
 
 from django.test import TestCase
 from django.urls import reverse
@@ -23,7 +24,7 @@ def custom_today():
     return datetime.date.today() + datetime.timedelta(days=5)
 
 
-def detail_url(target_id):
+def detail_url(target_id: UUID):
     """
     The detail_url function is a helper function that returns the URL for an individual target.
     It takes in one argument, which is the ID of the target to be displayed.
@@ -143,6 +144,17 @@ class TestTargetsApi(TestCase):
             self.assertEqual(res.data, target_serializer.data)
 
     def test_retrieve_one_target(self):
+        """
+        The test_retrieve_one_target function is a test that checks if the API can retrieve one target.
+        The function creates a new target, then uses the client to make an HTTP GET request to the detail_url of that
+         target.
+        It then asserts that this request returns an HTTP 200 OK status code and also asserts that it returns data equal
+         to the serialized data of our newly created target.
+
+        :param self: Access the class attributes and methods
+        :return: The serialized data of the target
+        :doc-author: Trelent
+        """
         target = create_target()
 
         res = self.client.get(detail_url(target.id))
@@ -171,3 +183,25 @@ class TestTargetsApi(TestCase):
 
         target = Target.objects.filter(pk=target.id).exists()
         self.assertFalse(target)
+
+    def test_update_target(self):
+        """
+        The test_update_target function tests the update target endpoint.
+        It does so by creating a new target, then updating it with a payload containing the name "Testing update".
+        The test asserts that the status code is 200 OK and that the id of our updated object matches our original
+         object's id.
+        Finally, we assert that our updated object's name is equal to &quot;Testing Update&quot;.
+
+        :param self: Represent the instance of the class
+        :return: Status code 200 (ok) and the updated target
+        :doc-author: Trelent
+        """
+        target = create_target()
+
+        payload = {"name": "Testing update"}
+
+        res = self.client.patch(detail_url(target.id), payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["id"], str(target.id))
+        self.assertEqual(res.data["name"], payload["name"])
